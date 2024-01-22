@@ -8,7 +8,7 @@ const app = express();
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors({ origin: ["http://localhost:3000", "https://test-node-sender.onrender.com", "https://test-node-sender.onrender.com/amazon", "https://premium-nodemailer.onrender.com", "https://node-sender-bb4y0.onrender.com", "https://node-sender-bb4y0.onrender.com/amazon", "https://node-sender-stillbroke.onrender.com", "https://node-sender-stillbroke.onrender.com/amazon", "https://malaika-mailer.onrender.com", "https://malaika-mailer.onrender.com/amazon", "https://sms-sender-twilio.web.app", "https://sms-sender-twilio.web.app/support", "https://sms-sender-smtp.web.app", "https://sms-sender-smtp.web.app/support"], credentials: true }));
+app.use(cors({ origin: ["http://localhost:3000", "https://sms-sender-music-life.onrender.com", "https://sms-sender-music-life.onrender.com/support", "https://sms-sender-ml.web.app", "https://sms-sender-ml.web.app/support", "https://sms-sender-twilio.web.app", "https://sms-sender-twilio.web.app/support", "https://sms-sender-smtp.web.app", "https://sms-sender-smtp.web.app/support"], credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
