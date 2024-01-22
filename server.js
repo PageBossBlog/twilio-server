@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Use your existing routes
-app.use("/sms-sender", senderRoute);
+app.use("/twilio", senderRoute);
 
 // Error handling middleware
 app.use((error, req, res, next) => {
@@ -24,10 +24,10 @@ app.use((error, req, res, next) => {
 
 // Default route
 app.use("/", (req, res) => {
-  res.send("Welcome to Node SMS Sender!");
+  res.send("Welcome to Twilio SMS Sender!");
 });
 
 const port = process.env.PORT || 8800;
 app.listen(port, () => {
-  console.log(`SMS Sender is running on port ${port}`);
+  console.log(`Twilio SMS Sender is running on port ${port}`);
 });
