@@ -4,6 +4,22 @@ import pQueue from "p-queue";
 
 dotenv.config();
 
+const sendSMS = async (twilioClient, phoneNumber, smsMessage) => {
+  try {
+    const messageInfo = await twilioClient.client.messages.create({
+      body: smsMessage,
+      from: twilioClient.twilioNumber,
+      to: phoneNumber,
+    });
+
+    console.log(`SMS sent to ${phoneNumber}: ${messageInfo.sid}`);
+    return { phoneNumber, status: "success", sid: messageInfo.sid };
+  } catch (error) {
+    console.error(`Failed to send SMS to ${phoneNumber}: ${error.message}`);
+    return { phoneNumber, status: "failed", error: error.message };
+  }
+};
+
 export const smsSender = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
@@ -13,61 +29,25 @@ export const smsSender = async (req, res) => {
     const messageCount = smsMessage.length;
 
     const twilioClients = twilioAccounts.map(
-      ({ accountSid, authToken, messagingServiceSid, fromNumber }) => {
-        if (messagingServiceSid) {
-          return {
-            client: twilio(accountSid, authToken).services(messagingServiceSid),
-            fromNumber,
-          };
-        } else {
-          return { client: twilio(accountSid, authToken), fromNumber };
-        }
+      ({ accountSid, authToken, twilioNumber }) => {
+        return {
+          client: twilio(accountSid, authToken),
+          twilioNumber,
+        };
       }
     );
 
     const getRandomTwilioClient = () => {
       const randomIndex = Math.floor(Math.random() * twilioCount);
-      const twilioClient = twilioClients[randomIndex];
-
-      // If messagingServiceSid is not present, use the Twilio number directly
-      if (!twilioClient.client.messagingServiceSid) {
-        return twilioClient;
-      }
-
-      // If messagingServiceSid is present, use the specified service
-      return {
-        client: twilio(
-          twilioClient.client.accountSid,
-          twilioClient.client.authToken
-        ).services(twilioClient.client.messagingServiceSid),
-        fromNumber: twilioClient.fromNumber,
-      };
+      return twilioClients[randomIndex];
     };
 
     const smsQueue = new pQueue({ concurrency: 100 });
 
-    const sendSMS = async (phoneNumber, smsMessage) => {
-      const twilioClient = getRandomTwilioClient();
-
-      try {
-        const messageInfo = await twilioClient.client.messages.create({
-          body: smsMessage,
-          messagingServiceSid: twilioClient.client.messagingServiceSid,
-          to: phoneNumber,
-        });
-
-        console.log(`SMS sent to ${phoneNumber}: ${messageInfo.sid}`);
-        return { phoneNumber, status: "success", sid: messageInfo.sid };
-      } catch (error) {
-        console.error(`Failed to send SMS to ${phoneNumber}: ${error.message}`);
-        return { phoneNumber, status: "failed", error: error.message };
-      }
-    };
-
     const results = await Promise.all(
       smsList.map((phoneNumber, index) =>
         smsQueue.add(() =>
-          sendSMS(phoneNumber, smsMessage[index % messageCount])
+          sendSMS(getRandomTwilioClient(), phoneNumber, smsMessage[index % messageCount])
         )
       )
     );
@@ -75,8 +55,6 @@ export const smsSender = async (req, res) => {
     res.status(200).json({ message: "SMS sent successfully", results });
   } catch (error) {
     console.error(`Failed to send SMS: ${error.message}`);
-    res
-      .status(500)
-      .json({ message: "Failed to send SMS", error: error.message });
+    res.status(500).json({ message: "Failed to send SMS", error: error.message });
   }
 };
